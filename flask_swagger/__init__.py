@@ -157,8 +157,6 @@ def make_resources(app, base_path, resource_path=None, description=None,
     base_path is used.
     """
     resource_path = resource_path or urlparse(base_path).path
-    if not resource_path.endswith('/'):
-        resource_path += '/'
     builder = APIBuilder(app, resource_path)
     return {
         'apiVersion': api_version,

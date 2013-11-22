@@ -228,7 +228,7 @@ class SwaggerGenIntegrationTestCase(unittest.TestCase):
                  {'message': 'Bad request', 'code': '400'}]
              }], 'path': '/users/search',
             'description': None}],
-            'resourcePath': '/api/',
+            'resourcePath': '/api',
             'swaggerVersion': '1.2', 'apiVersion': '1'}
         actual = make_resources(self.app, 'http://foo.bar/api')
         self.assertEqual(expected, actual)
