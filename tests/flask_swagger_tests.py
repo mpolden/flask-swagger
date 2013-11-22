@@ -18,6 +18,7 @@ class SwaggerGenTestCase(unittest.TestCase):
 
             :notes Implementation notes
             :notes More implementation notes
+            :notes :Note with: colon
             :param user_id: User ID
             :param username: Lookup by username
             :type user_id: int
@@ -34,18 +35,21 @@ class SwaggerGenTestCase(unittest.TestCase):
         self.assertEqual({':param': [{'name': 'ham',
                                       'value': 'eggs and spam'}]},
                          parse_doc([':param ham: eggs and spam']))
-        self.assertEqual({':param': ['ham']},
+        self.assertEqual({':param': [{'name': 'ham', 'value': ''}]},
                          parse_doc([':param ham:']))
 
         parameters = parse_doc(self.doc)
         self.assertEqual([{'name': 'user_id', 'value': 'User ID'},
                           {'name': 'username', 'value': 'Lookup by username'}],
                          parameters[':param'])
-        self.assertEqual(['user_id'], parameters[':required'])
+        self.assertEqual([{'name': 'user_id', 'value': ''}],
+                         parameters[':required'])
         self.assertEqual([{'name': '200', 'value': 'Successful response'},
                           {'name': '404', 'value': 'No such user'}],
                          parameters[':statuscode'])
-        self.assertEqual(['Implementation notes', 'More implementation notes'],
+        self.assertEqual([{'name': 'Implementation notes', 'value': ''},
+                          {'name': 'More implementation notes', 'value': ''},
+                          {'name': '', 'value': 'Note with: colon'}],
                          parameters[':notes'])
 
     def test_parameterize(self):
@@ -119,6 +123,8 @@ class APIBuilderTestCase(unittest.TestCase):
             """
             Upload a user avatar
 
+            :notes Image must be within 400x400 pixels.
+            :notes :Image should be one of these formats: png, jpg or gif
             :param user_id: User ID
             :type user_id: long
             :required user_id
@@ -157,6 +163,8 @@ class APIBuilderTestCase(unittest.TestCase):
         expected = {'operations': [
             {'responseMessages': [],
              'nickname': 'avatar', 'method': 'POST',
+             'notes': ('Image must be within 400x400 pixels. Image should be '
+                       'one of these formats: png, jpg or gif'),
              'parameters': [
                  {'name': 'user_id', 'dataType': 'long',
                   'paramType': 'path', 'required': True, 'defaultValue': '',

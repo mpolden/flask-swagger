@@ -6,30 +6,24 @@ from urlparse import urlparse
 
 
 def parse_doc(lines):
-    """
-    Create a data structure from a Sphinx-style docstring
-    """
+    """Create a data structure from a Sphinx-style docstring"""
     doc = {}
     for line in lines:
-        m = re.match(r'^(:\w+) ([^:]+)(?:: ?)?(.+)?$', line)
+        m = re.match(r'^(:\w+) ([^:]*)(?:: ?)?(.*)$', line)
         if m is None:
             continue
         key, name, value = m.groups()
         if key not in doc:
             doc[key] = []
-        if value is None:
-            doc[key].append(name)
-        else:
-            doc[key].append({
-                'name': name,
-                'value': value
-            })
+        doc[key].append({
+            'name': name,
+            'value': value
+        })
     return doc
 
 
 def parameterize(path):
-    """
-    Parmeterize path using Swagger-style for parameters.
+    """Parmeterize path using Swagger-style for parameters.
     For example the Flask route /api/v1/users/<int:user_id> is translated to
     /api/v1/users/{user_id}
     """
@@ -42,9 +36,7 @@ def parameterize(path):
 
 
 def lremove(s, prefix):
-    """
-    Remove prefix from string s
-    """
+    """Remove prefix from string s"""
     return s[len(prefix):] if s.startswith(prefix) else s
 
 
@@ -59,15 +51,11 @@ class APIEndpoint(object):
         self.path = parameterize(lremove(str(rule), prefix))
 
     def _filter_methods(self, methods=('GET', 'POST', 'PUT', 'DELETE')):
-        """
-        Filter methods to generate endpoints for
-        """
+        """Filter methods to generate endpoints for"""
         return self.rule.methods.intersection(methods)
 
     def _make_parameters(self, lines):
-        """
-        Make parameters from :param lines
-        """
+        """Make parameters from :param lines"""
         doc = parse_doc(lines)
 
         def _get_value(key, name, default=None):
@@ -77,14 +65,14 @@ class APIEndpoint(object):
             return default
 
         def make_parameter(param_type, name, value):
+            required = (param['name'] for param in doc.get(':required', []))
             return {
                 'paramType': _get_value(':paramtype', name, param_type),
                 'name': name,
                 'description': value,
                 'dataType': _get_value(':type', name, 'string'),
                 'defaultValue': _get_value(':default', name, ''),
-                'required': param_type == 'path' or name in doc.get(
-                    ':required', [])
+                'required': param_type == 'path' or name in required
             }
 
         parameters = []
@@ -97,9 +85,7 @@ class APIEndpoint(object):
         return parameters
 
     def _make_status_codes(self, lines):
-        """
-        Make status code from :statuscode lines
-        """
+        """Make status code from :statuscode lines"""
         doc = parse_doc(lines)
         status_codes = []
         for status_code in doc.get(':statuscode', []):
@@ -110,19 +96,17 @@ class APIEndpoint(object):
         return status_codes
 
     def _make_summary(self, lines):
-        """
-        Make summary from lines that are not directives
-        """
+        """Make summary from lines that are not directives"""
         return '\n'.join((line for line in lines
                          if not line.startswith(':'))).strip()
 
     def _make_notes(self, lines):
-        return ' '.join(parse_doc(lines).get(':notes', []))
+        notes = (param['name'] or param['value']
+                 for param in parse_doc(lines).get(':notes', []))
+        return ' '.join(notes)
 
     def _make_operation(self, method):
-        """
-        Make operation based on the given method
-        """
+        """Make operation based on the given method"""
         view_function = self.app.view_functions.get(self.rule.endpoint)
 
         operation = {
@@ -153,17 +137,13 @@ class APIBuilder(object):
         self.prefix = prefix
 
     def _find_endpoints(self):
-        """
-        Find and create API endpoints for routes that match prefix
-        """
+        """Find and create API endpoints for routes that match prefix"""
         return [APIEndpoint(self.app, rule, self.prefix)
                 for rule in self.app.url_map.iter_rules()
                 if str(rule).startswith(self.prefix)]
 
     def make_apis(self, description=None):
-        """
-        Make all APIs
-        """
+        """Make all APIs"""
         return [dict(path=endpoint.path, description=description,
                 operations=endpoint.make_operations())
                 for endpoint in self._find_endpoints()]
@@ -171,10 +151,9 @@ class APIBuilder(object):
 
 def make_resources(app, base_path, resource_path=None, description=None,
                    api_version='1', swagger_version='1.2'):
-    """
-    Make Swagger resources from app, using base_path as the base path for the
-    API. The parameter resource_path is used to filter which routes to generate
-    resources for. If resource_path is not set, the path portion of
+    """Make Swagger resources from app, using base_path as the base path for
+    the API. The parameter resource_path is used to filter which routes to
+    generate resources for. If resource_path is not set, the path portion of
     base_path is used.
     """
     resource_path = resource_path or urlparse(base_path).path
