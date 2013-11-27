@@ -140,8 +140,8 @@ class APIBuilderTestCase(unittest.TestCase):
         endpoints = self.builder._find_endpoints()
         self.assertEqual(2, len(endpoints))
         self.assertEqual(self.app, endpoints[0].app)
-        self.assertEqual('/users/{user_id}/avatar', endpoints[0].path)
-        self.assertEqual('/users/{user_id}', endpoints[1].path)
+        self.assertEqual('/users/{user_id}', endpoints[0].path)
+        self.assertEqual('/users/{user_id}/avatar', endpoints[1].path)
 
     def test_make_apis_images(self):
         expected = {'operations': [{'responseMessages': [
@@ -157,7 +157,7 @@ class APIBuilderTestCase(unittest.TestCase):
                  'description': 'True to include roles in result'}],
             'summary': 'Retrieve a user'}],
             'path': '/users/{user_id}', 'description': None}
-        self.assertEqual(expected, self.builder.make_apis()[1])
+        self.assertEqual(expected, self.builder.make_apis()[0])
 
     def test_make_apis_groups(self):
         expected = {'operations': [
@@ -174,7 +174,7 @@ class APIBuilderTestCase(unittest.TestCase):
                   'defaultValue': '', 'description': 'Avatar image'}],
              'summary': 'Upload a user avatar'}],
             'path': '/users/{user_id}/avatar', 'description': None}
-        self.assertEqual(expected, self.builder.make_apis()[0])
+        self.assertEqual(expected, self.builder.make_apis()[1])
 
 
 class SwaggerGenIntegrationTestCase(unittest.TestCase):

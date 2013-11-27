@@ -138,9 +138,9 @@ class APIBuilder(object):
 
     def _find_endpoints(self):
         """Find and create API endpoints for routes that match prefix"""
-        return [APIEndpoint(self.app, rule, self.prefix)
+        return sorted([APIEndpoint(self.app, rule, self.prefix)
                 for rule in self.app.url_map.iter_rules()
-                if str(rule).startswith(self.prefix)]
+                if str(rule).startswith(self.prefix)], key=lambda x:x.rule.rule)
 
     def make_apis(self, description=None):
         """Make all APIs"""
